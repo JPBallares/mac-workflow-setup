@@ -1,0 +1,205 @@
+#!/bin/bash
+
+# tmux-session-manager.sh - Manage named tmux session saves and restores
+# Usage: ./tmux-session-manager.sh [save|restore|list|delete] [session_name]
+
+set -e
+
+# Configuration
+RESURRECT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tmux/resurrect"
+FALLBACK_DIR="$HOME/.tmux/resurrect"
+NAMED_SAVES_DIR=""
+
+# Determine the correct resurrect directory
+if [ -d "$RESURRECT_DIR" ]; then
+    NAMED_SAVES_DIR="$RESURRECT_DIR/named"
+elif [ -d "$FALLBACK_DIR" ]; then
+    RESURRECT_DIR="$FALLBACK_DIR"
+    NAMED_SAVES_DIR="$FALLBACK_DIR/named"
+else
+    echo "Error: tmux-resurrect directory not found. Make sure tmux-resurrect is installed and has been used at least once."
+    exit 1
+fi
+
+# Create named saves directory if it doesn't exist
+mkdir -p "$NAMED_SAVES_DIR"
+
+show_usage() {
+    echo "Usage: tsm <command> [session_name]"
+    echo ""
+    echo "Commands:"
+    echo "  save <name>     Save current tmux session with a name"
+    echo "  restore <name>  Restore a named tmux session"
+    echo "  list           List all named saves"
+    echo "  delete <name>   Delete a named save"
+    echo "  help           Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  tsm save myproject"
+    echo "  tsm restore myproject"
+    echo "  tsm list"
+    echo "  tsm delete oldproject"
+}
+
+save_session() {
+    local session_name="$1"
+    
+    if [ -z "$session_name" ]; then
+        echo "Error: Please provide a session name"
+        echo "Usage: tsm save <session_name>"
+        exit 1
+    fi
+    
+    # Check if tmux is running
+    if ! tmux info &>/dev/null; then
+        echo "Error: No tmux session is currently running"
+        exit 1
+    fi
+    
+    echo "Saving current tmux session as '$session_name'..."
+    
+    # Trigger tmux-resurrect save
+    tmux run-shell '~/.tmux/plugins/tmux-resurrect/scripts/save.sh' || {
+        echo "Error: Failed to save tmux session. Make sure tmux-resurrect is properly installed."
+        exit 1
+    }
+    
+    # Wait a moment for the save to complete
+    sleep 1
+    
+    # Find the most recent save file
+    local latest_save=$(ls -t "$RESURRECT_DIR"/tmux_resurrect_*.txt 2>/dev/null | head -n1)
+    
+    if [ -z "$latest_save" ]; then
+        echo "Error: No save file found after saving"
+        exit 1
+    fi
+    
+    # Copy the latest save to our named saves directory
+    local named_save="$NAMED_SAVES_DIR/${session_name}.txt"
+    cp "$latest_save" "$named_save"
+    
+    echo "Session saved as '$session_name'"
+    echo "Save file: $named_save"
+}
+
+restore_session() {
+    local session_name="$1"
+    
+    if [ -z "$session_name" ]; then
+        echo "Error: Please provide a session name"
+        echo "Usage: tsm restore <session_name>"
+        exit 1
+    fi
+    
+    local named_save="$NAMED_SAVES_DIR/${session_name}.txt"
+    
+    if [ ! -f "$named_save" ]; then
+        echo "Error: No saved session found with name '$session_name'"
+        echo "Use 'tsm list' to see available saves"
+        exit 1
+    fi
+    
+    # Check if tmux is running and warn user
+    if tmux info &>/dev/null; then
+        echo "Warning: tmux is currently running. For best results, you should:"
+        echo "1. Kill all tmux sessions: tmux kill-server"
+        echo "2. Start a fresh tmux session"
+        echo "3. Run this restore command again"
+        echo ""
+        read -p "Continue anyway? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 0
+        fi
+    fi
+    
+    echo "Restoring tmux session '$session_name'..."
+    
+    # Create symlink to make this the 'last' save
+    ln -sf "$named_save" "$RESURRECT_DIR/last"
+    
+    echo "Symlink created. Now restore using tmux-resurrect:"
+    echo "In tmux, press: prefix + Ctrl-r"
+    echo ""
+    echo "Or if you're not in tmux yet:"
+    echo "1. Start tmux: tmux"
+    echo "2. Press: prefix + Ctrl-r"
+}
+
+list_sessions() {
+    echo "Named tmux session saves:"
+    echo ""
+    
+    if [ ! "$(ls -A "$NAMED_SAVES_DIR" 2>/dev/null)" ]; then
+        echo "No named saves found."
+        return
+    fi
+    
+    for save_file in "$NAMED_SAVES_DIR"/*.txt; do
+        if [ -f "$save_file" ]; then
+            local name=$(basename "$save_file" .txt)
+            local date=$(stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" "$save_file" 2>/dev/null || stat -c "%y" "$save_file" 2>/dev/null | cut -d. -f1)
+            printf "  %-20s %s\n" "$name" "$date"
+        fi
+    done
+}
+
+delete_session() {
+    local session_name="$1"
+    
+    if [ -z "$session_name" ]; then
+        echo "Error: Please provide a session name"
+        echo "Usage: tsm delete <session_name>"
+        exit 1
+    fi
+    
+    local named_save="$NAMED_SAVES_DIR/${session_name}.txt"
+    
+    if [ ! -f "$named_save" ]; then
+        echo "Error: No saved session found with name '$session_name'"
+        exit 1
+    fi
+    
+    echo "Are you sure you want to delete the saved session '$session_name'?"
+    read -p "This cannot be undone. (y/N): " -n 1 -r
+    echo
+    
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        rm "$named_save"
+        echo "Session '$session_name' deleted."
+    else
+        echo "Deletion cancelled."
+    fi
+}
+
+# Main script logic
+case "${1:-}" in
+    "save")
+        save_session "$2"
+        ;;
+    "restore")
+        restore_session "$2"
+        ;;
+    "list")
+        list_sessions
+        ;;
+    "delete")
+        delete_session "$2"
+        ;;
+    "help"|"-h"|"--help")
+        show_usage
+        ;;
+    "")
+        echo "Error: No command provided"
+        echo ""
+        show_usage
+        exit 1
+        ;;
+    *)
+        echo "Error: Unknown command '$1'"
+        echo ""
+        show_usage
+        exit 1
+        ;;
+esac
