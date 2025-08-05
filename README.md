@@ -1,4 +1,8 @@
 # Setup
+
+Be sure to clone it or move it to `~/.dev/configs`. As the script symlink from that directory.
+You can update the `./setup.sh` if you want a different location.
+
 Run `./setup.sh` to symlink configurations.
 
 Add this to `~/.zshrc` to fix issue with tmux Alt/Meta key in macOs

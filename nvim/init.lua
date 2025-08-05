@@ -72,6 +72,11 @@ require("lazy").setup({
     },
     config = function()
       require("telescope").setup({
+        pickers = {
+          buffers = {
+            initial_mode = "normal"
+          }
+        },
         defaults = {
           file_ignore_patterns = { 
             "node_modules", 
@@ -159,7 +164,8 @@ require("lazy").setup({
         automatic_installation = true,
         automatic_enable = {
           exclude = {
-            "ts_ls"
+            "ts_ls",
+            "pylsp",
           }
         }
       })
@@ -211,40 +217,39 @@ require("lazy").setup({
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
       local lspconfig = require("lspconfig")
 
-      -- Commenting this out as mason autostarts lsp
       -- Python - Use pylsp with black, flake8, isort
-      -- Try to find pylsp in local .venv first, then fall back to system
-      -- local pylsp_cmd = "pylsp"
-      -- local venv_pylsp = vim.fn.getcwd() .. "/.venv/bin/pylsp"
-      -- if vim.fn.executable(venv_pylsp) == 1 then
-      --   pylsp_cmd = venv_pylsp
-      -- end
-      --
-      -- lspconfig.pylsp.setup({
-      --   cmd = { pylsp_cmd },
-      --   capabilities = capabilities,
-      --   settings = {
-      --     pylsp = {
-      --       plugins = {
-      --         -- Disable conflicting linters/formatters
-      --         pycodestyle = { enabled = false },
-      --         pyflakes = { enabled = false },
-      --         autopep8 = { enabled = false },
-      --         yapf = { enabled = false },
-      --         pylint = { enabled = false },
-      --
-      --         -- Enable external tools
-      --         black = { enabled = true },
-      --         flake8 = { enabled = true },
-      --         isort = { enabled = true, profile = "black" },
-      --
-      --         -- Keep completions
-      --         rope_completion = { enabled = true },
-      --         rope_autoimport = { enabled = true },
-      --       }
-      --     }
-      --   }
-      -- })
+      -- Try to find pylsp in local .venv first, then fall back to system local
+      pylsp_cmd = "pylsp"
+      local venv_pylsp = vim.fn.getcwd() .. "/.venv/bin/pylsp"
+      if vim.fn.executable(venv_pylsp) == 1 then
+        pylsp_cmd = venv_pylsp
+      end
+
+      lspconfig.pylsp.setup({
+        cmd = { pylsp_cmd },
+        capabilities = capabilities,
+        settings = {
+          pylsp = {
+            plugins = {
+              -- Disable conflicting linters/formatters
+              pycodestyle = { enabled = false },
+              pyflakes = { enabled = false },
+              autopep8 = { enabled = false },
+              yapf = { enabled = false },
+              pylint = { enabled = false },
+
+              -- Enable external tools
+              black = { enabled = true },
+              flake8 = { enabled = true },
+              isort = { enabled = true, profile = "black" },
+
+              -- Keep completions
+              rope_completion = { enabled = true },
+              rope_autoimport = { enabled = true },
+            }
+          }
+        }
+      })
 
       -- JavaScript/TypeScript
       lspconfig.ts_ls.setup({
@@ -254,6 +259,7 @@ require("lazy").setup({
         end,
       })
 
+      -- Commenting this out as mason autostarts lsp
       -- Rust
       -- lspconfig.rust_analyzer.setup({
       --   capabilities = capabilities,
