@@ -15,6 +15,20 @@ if [[ -n "$TMUX" ]]; then
 fi
 ```
 
+Also this if working with virtual env with python
+```
+# setup .venv
+autoload -U add-zsh-hook
+auto_venv_activate() {
+  if [[ -f .venv/bin/activate ]]; then
+    source .venv/bin/activate
+  fi
+}
+
+add-zsh-hook chpwd auto_venv_activate
+auto_venv_activate  # activate on shell start
+```
+
 ## Tmux
 
 Install tpm to manage tmux plugins
