@@ -16,6 +16,7 @@ fi
 ```
 
 Also this if working with virtual env with python
+
 ```
 # setup .venv
 autoload -U add-zsh-hook
@@ -32,6 +33,7 @@ auto_venv_activate  # activate on shell start
 ## Tmux
 
 Install tpm to manage tmux plugins
+
 ```
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ```
@@ -49,6 +51,7 @@ export PATH="$HOME/.tmux/utils:$PATH"
 ```
 
 To use save and restore:
+
 ```
 tsm save <project>
 tsm restore <project>
@@ -61,7 +64,7 @@ tsm list
 
 ## VIM
 
-Install vim plug
+Install vim plug:
 ```
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
@@ -73,3 +76,13 @@ Press `:` to trigger commands then `PlugInstall`.
 
 ## NVIM
 This is automatic setup. Will automatically install the required plugins.
+
+### PyLSP
+For pylsp to work need to install additional requirements:
+
+```
+source ~/.venv/bin/active
+uv pip install python-lsp-black python-lsp-isort
+```
+
+Make sure to close current `nvim` and run `source .venv/bin/activate` for nvim to detect pylsp.
