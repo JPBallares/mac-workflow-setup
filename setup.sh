@@ -9,6 +9,7 @@ FILES=(
   "$CONFIG_DIR/.tmux.conf:.tmux.conf"
   "$CONFIG_DIR/nvim/init.lua:.config/nvim/init.lua"
   "$CONFIG_DIR/gitui/key_bindings.ron:.config/gitui/key_bindings.ron"
+  "$CONFIG_DIR/.tmux/utils/tsm:.tmux/utils/tsm"
 )
 
 # Create symlinks
