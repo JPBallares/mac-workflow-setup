@@ -30,6 +30,16 @@ vim.opt.expandtab = true
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
+
+-- File-specific indentation for JS/TS files
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "javascript", "typescript", "javascriptreact", "typescriptreact" },
+  callback = function()
+    vim.opt_local.tabstop = 2
+    vim.opt_local.shiftwidth = 2
+    vim.opt_local.softtabstop = 2
+  end,
+})
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
 vim.opt.foldenable = false
@@ -99,7 +109,7 @@ require("lazy").setup({
               preview_width = 0.6,
             },
           },
-          sorting_strategy = "ascending",
+          sorting_strategy = "descending",
           layout_strategy = "horizontal",
         },
         extensions = {
