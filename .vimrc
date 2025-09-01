@@ -72,6 +72,7 @@ set wildignore=*.docx,*.jpg,*.png,*.gif,*.pdf,*.pyc,*.exe,*.flv,*.img,*.xlsx
 " MAPPINGS --------------------------------------------------------------- {{{
 
 " Mappings code goes here.
+    let mapleader = " "  " Sets the leader key to a space
 
     " tab management
     nnoremap <leader>h :tabp<CR>
@@ -79,6 +80,7 @@ set wildignore=*.docx,*.jpg,*.png,*.gif,*.pdf,*.pyc,*.exe,*.flv,*.img,*.xlsx
     nnoremap <leader>tn :tabnew<CR>
     nnoremap <leader>tc :tabclose<CR>
     nnoremap <leader>to :tabonly<CR>
+    nnoremap <leader>ff :Files<CR>
 
     " session management
     function! s:SessionName()
