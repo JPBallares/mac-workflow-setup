@@ -102,13 +102,19 @@ require("lazy").setup({
             i = {
               ["<C-u>"] = false,
               ["<C-d>"] = false,
+              ["<C-x>"] = require("telescope.actions").delete_buffer,
             },
+            n = {
+              ["<C-x>"] = require("telescope.actions").delete_buffer,
+            }
           },
           layout_config = {
             horizontal = {
               preview_width = 0.6,
+              width = 0.9,
             },
           },
+          path_display = { "truncate" },
           sorting_strategy = "descending",
           layout_strategy = "horizontal",
         },

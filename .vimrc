@@ -72,7 +72,8 @@ set wildignore=*.docx,*.jpg,*.png,*.gif,*.pdf,*.pyc,*.exe,*.flv,*.img,*.xlsx
 " MAPPINGS --------------------------------------------------------------- {{{
 
 " Mappings code goes here.
-    let mapleader = " "  " Sets the leader key to a space
+    nnoremap <SPACE> <Nop>
+    let mapleader=" "
 
     " tab management
     nnoremap <leader>h :tabp<CR>
