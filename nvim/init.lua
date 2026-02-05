@@ -171,7 +171,20 @@ require("lazy").setup({
     config = function()
       -- Set normal LSP log level
       vim.lsp.set_log_level("warn")
-      
+
+      vim.keymap.set("n", "gs", function()
+        require("nvim-navbuddy").open()
+      end, { desc = "NavBuddy symbols" })
+
+      -- Breadcrumbs on_attach function
+      local on_attach = function(client, bufnr)
+        if client.server_capabilities.documentSymbolProvider then
+          local navic = require("nvim-navic")
+          navic.attach(client, bufnr)
+        end
+      end
+
+
       -- Mason setup
       require("mason").setup()
       
@@ -244,6 +257,7 @@ require("lazy").setup({
       lspconfig.pylsp.setup({
         cmd = { pylsp_cmd },
         capabilities = capabilities,
+        on_attach = on_attach,
         settings = {
           pylsp = {
             plugins = {
@@ -272,6 +286,7 @@ require("lazy").setup({
         capabilities = capabilities,
         on_attach = function(client, bufnr)
           client.server_capabilities.documentFormattingProvider = false
+          on_attach(client, bufnr)
         end,
       })
 
@@ -339,6 +354,7 @@ require("lazy").setup({
           end
         end,
       })
+
     end,
   },
 
@@ -486,68 +502,68 @@ require("lazy").setup({
   },
 
   -- Symbols outline for class/function tree (gs functionality)
-  {
-    "hedyhli/outline.nvim",
-    lazy = true,
-    cmd = { "Outline", "OutlineOpen" },
-    keys = {
-      { "gs", "<cmd>Outline<CR>", desc = "Toggle symbols outline" },
-    },
-    config = function()
-      require("outline").setup({
-        outline_window = {
-          position = "right",
-          width = 25,
-          relative_width = true,
-          -- Fix buffer naming conflict
-          buf_name_fmt = function()
-            return "[Outline] " .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":t")
-          end,
-        },
-        symbols = {
-          filter = {
-            'Class',
-            'Function',
-            'Method',
-            'Constructor',
-            'Enum',
-            'Interface',
-            'Module',
-            'Namespace',
-            'Package',
-            'Struct',
-          },
-        },
-        keymaps = {
-          show_help = '?',
-          close = {'<Esc>', 'q'},
-          goto_location = '<Cr>',
-          peek_location = 'o',
-          goto_and_close = '<S-Cr>',
-          restore_location = '<C-g>',
-          hover_symbol = '<C-space>',
-          toggle_preview = 'K',
-          rename_symbol = 'r',
-          code_actions = 'a',
-          fold = 'h',
-          unfold = 'l',
-          fold_toggle = '<Tab>',
-          fold_toggle_all = '<S-Tab>',
-          fold_all = 'W',
-          unfold_all = 'E',
-          fold_reset = 'R',
-          down_and_jump = '<C-j>',
-          up_and_jump = '<C-k>',
-        },
-        providers = {
-          priority = { 'lsp', 'coc', 'markdown', 'norg' },
-          lsp = {
-            blacklist_clients = {},
-          },
-        },
-      })
-    end,
-  },
+  -- {
+  --   "hedyhli/outline.nvim",
+  --   lazy = true,
+  --   cmd = { "Outline", "OutlineOpen" },
+  --   keys = {
+  --     { "gs", "<cmd>Outline<CR>", desc = "Toggle symbols outline" },
+  --   },
+  --   config = function()
+  --     require("outline").setup({
+  --       outline_window = {
+  --         position = "right",
+  --         width = 25,
+  --         relative_width = true,
+  --         -- Fix buffer naming conflict
+  --         buf_name_fmt = function()
+  --           return "[Outline] " .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":t")
+  --         end,
+  --       },
+  --       symbols = {
+  --         filter = {
+  --           'Class',
+  --           'Function',
+  --           'Method',
+  --           'Constructor',
+  --           'Enum',
+  --           'Interface',
+  --           'Module',
+  --           'Namespace',
+  --           'Package',
+  --           'Struct',
+  --         },
+  --       },
+  --       keymaps = {
+  --         show_help = '?',
+  --         close = {'<Esc>', 'q'},
+  --         goto_location = '<Cr>',
+  --         peek_location = 'o',
+  --         goto_and_close = '<S-Cr>',
+  --         restore_location = '<C-g>',
+  --         hover_symbol = '<C-space>',
+  --         toggle_preview = 'K',
+  --         rename_symbol = 'r',
+  --         code_actions = 'a',
+  --         fold = 'h',
+  --         unfold = 'l',
+  --         fold_toggle = '<Tab>',
+  --         fold_toggle_all = '<S-Tab>',
+  --         fold_all = 'W',
+  --         unfold_all = 'E',
+  --         fold_reset = 'R',
+  --         down_and_jump = '<C-j>',
+  --         up_and_jump = '<C-k>',
+  --       },
+  --       providers = {
+  --         priority = { 'lsp', 'coc', 'markdown', 'norg' },
+  --         lsp = {
+  --           blacklist_clients = {},
+  --         },
+  --       },
+  --     })
+  --   end,
+  -- },
 
   -- Multiple cursor support (gl functionality for selecting duplicates)
   {
@@ -739,6 +755,63 @@ require("lazy").setup({
       vim.cmd.colorscheme("ayu-dark")
     end,
   },
+  
+  -- Breadcrumbs
+  {
+    "SmiteshP/nvim-navic",
+    dependencies = {
+      "neovim/nvim-lspconfig",
+    }
+  },
+  
+  {
+    "SmiteshP/nvim-navbuddy",
+    dependencies = {
+      "neovim/nvim-lspconfig",
+      "SmiteshP/nvim-navic",
+      "MunifTanjim/nui.nvim",
+    },
+    opts = {
+      lsp = { auto_attach = true },
+    },
+  },
+
+  {
+    "nvim-lualine/lualine.nvim",
+    dependencies = { 
+      "SmiteshP/nvim-navic",
+      "nvim-tree/nvim-web-devicons",
+    },
+    config = function()
+      local navic = require("nvim-navic")
+  
+      require("lualine").setup({
+        options = {
+          theme = "auto",
+          component_separators = { left = '|', right = '|' },
+          section_separators = { left = '', right = '' },
+        },
+        sections = {
+          lualine_a = { "mode" },
+          lualine_b = { "branch", "diff", "diagnostics" },
+          lualine_c = {
+            { "filename", path = 1 },
+            {
+              function()
+                return navic.get_location()
+              end,
+              cond = function()
+                return navic.is_available()
+              end,
+            },
+          },
+          lualine_x = { "encoding", "fileformat", "filetype" },
+          lualine_y = { "progress" },
+          lualine_z = { "location" },
+        },
+      })
+    end,
+  }
 
 })
 
@@ -753,6 +826,9 @@ vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to left window" 
 vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to right window" })
 vim.keymap.set("n", "<C-j>", "<C-w><C-j>", { desc = "Move focus to lower window" })
 vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus to upper window" })
+
+-- Extra recognition for tf file
+vim.filetype.add({ extension = { tf = "terraform" } })
 
 -- Highlight when yanking text
 vim.api.nvim_create_autocmd("TextYankPost", {
