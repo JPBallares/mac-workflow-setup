@@ -405,9 +405,14 @@ require("lazy").setup({
       vim.g.loaded_netrwPlugin = 1
       
       require("nvim-tree").setup({
+        update_focused_file = {
+          enable = true,
+          update_root = false,
+        },
         sort_by = "case_sensitive",
         view = {
           width = 30,
+          relativenumber = true,
         },
         renderer = {
           group_empty = true,
