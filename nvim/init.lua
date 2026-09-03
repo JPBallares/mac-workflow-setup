@@ -980,3 +980,31 @@ end, {
   nargs = '?',
   desc = "Remove surrounding characters from visual selection"
 })
+
+-- Allow copy over ssh --
+-- Use the built-in OSC 52 clipboard provider (Neovim >= 0.10) so yanks reach
+-- the *client's* clipboard, not the machine nvim runs on.
+-- Chain: nvim -> herdr pane terminal (forwards pane-child OSC 52 writes,
+-- see herdr 0.8.2 CHANGELOG) -> herdr server -> herdr client (local or over
+-- `herdr --remote`) -> client machine's native clipboard.
+-- Trigger when inside any herdr pane (HERDR_ENV=1) or over plain ssh
+-- (SSH_TTY/SSH_CONNECTION). Note: OSC 52 *reads* (the 'p' command) are not
+-- forwarded by herdr — paste with Cmd+V instead, which herdr bridges from
+-- the client's clipboard into the pane.
+if vim.env.HERDR_ENV == '1' or vim.env.SSH_TTY or vim.env.SSH_CONNECTION then
+  local ok, osc52 = pcall(require, 'vim.ui.clipboard.osc52')
+  if ok then
+    vim.g.clipboard = {
+      name = 'OSC 52',
+      copy = {
+        ['+'] = osc52.copy('+'),
+        ['*'] = osc52.copy('*'),
+      },
+      paste = {
+        ['+'] = osc52.paste('+'),
+        ['*'] = osc52.paste('*'),
+      },
+    }
+  end
+end
+
